@@ -51,35 +51,9 @@ def upload_file():
     filepath = os.path.join(FILES_PATH, document.get_saved_name())
     file.save(filepath)
 
+    printer_queue.append(document)
+
     return jsonify(document.to_dict())
-
-@app.route('/', methods=['GET', 'POST'])
-def fun():
-    return '''
-    <!doctype html>
-    <title>Upload new File</title>
-    <h1>Upload new File</h1>
-    <form method=post enctype=multipart/form-data>
-      <input type=file name=file>
-      <input type=submit value=Upload>
-    </form>
-    '''
-
-@app.route('/upload', methods=['POST'])
-def add_to_queue():
-    if not request.json:
-        abort(400)
-    filename, extension = os.path.splitext(request.json['file'])
-    if not extension in valid_extensions:
-        abort(422)
-    doc = {
-        'id': uuid.uuid4(),
-        'pos': len(printer_queue),
-        'file': request.json['file'],
-        'type': extension[1:]
-    }
-    printer_queue.append(doc)
-    return jsonify(doc)
 
 @app.route('/upload', methods=['GET'])
 def read_queue():
