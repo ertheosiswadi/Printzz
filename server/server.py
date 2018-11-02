@@ -55,9 +55,12 @@ def upload_file():
 
     return jsonify(document.to_dict())
 
-@app.route('/upload', methods=['GET'])
+@app.route('/get_queue', methods=['GET'])
 def read_queue():
-    return jsonify(printer_queue)
+    obj_queue = []
+    for doc in printer_queue:
+        obj_queue.append(doc.to_dict())
+    return jsonify(obj_queue)
 
 @app.route('/authenticate', methods=['POST'])
 def register():
