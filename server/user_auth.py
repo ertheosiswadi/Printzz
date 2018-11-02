@@ -3,6 +3,7 @@ from constants import DB_FILE
 from typing import Optional
 from user import User
 import uuid
+from passlib.hash import pbkdf2_sha256
 
 KEYS_TABLE='''CREATE TABLE keys (
             auth_key text PRIMARY KEY,
@@ -14,7 +15,10 @@ USER_TABLE = '''CREATE TABLE users (
             auth_key text NOT NULL)'''
 
 def hash_password(password):
-    return password
+    return pbkdf2_sha256.hash(password)
+
+def verify_password(password, password_hash):
+    return pbkdf2_sha256.verify(password, password_hash)
 
 def get_user(auth_key) -> Optional[User]:
     db_con = sqlite3.connect(DB_FILE)
@@ -48,7 +52,7 @@ def user_exists(username) -> bool:
 
     return True
 
-def register_user(username, password) -> Optional[str]:
+def register_user(username, password) -> Optional[User]:
     db_con = sqlite3.connect(DB_FILE)
 
     USER_INSERT_TEMP = "INSERT INTO users (uname, pwd, auth_key) VALUES (?, ?, ?)"
@@ -82,7 +86,7 @@ def authenticate_user(username, password) -> Optional[User]:
     if result is None:
         return None
 
-    if hash_password(password) != result[0]:
+    if not verify_password(password, result[0]):
         return None
 
     return User(username, result[1])

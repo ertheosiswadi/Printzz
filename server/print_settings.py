@@ -27,7 +27,7 @@ class PrintSettings:
         color = settings_dict[COLOR_KEY]
         copies = settings_dict[COPIES_KEY]
 
-        return PrintSettings(double_sided, color, copies)
+        return PrintSettings(double_sided, copies, color)
 
     def to_dict(self) -> dict:
         return {
@@ -50,10 +50,3 @@ class PrintSettings:
             return False
 
         return True
-
-
-
-
-
-
-

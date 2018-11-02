@@ -8,12 +8,15 @@ SETTINGS_KEY = 'settings'
 
 @dataclass
 class AddDocRequest:
+    '''
+    Represents the data received from an add doc request
+    '''
     document_name: str
     auth_key: str
     settings: PrintSettings
 
     @staticmethod
-    def from_dict(document_dict: dict) -> Optional[PrintSettings]:
+    def from_dict(document_dict: dict):
         keys = [DOCUMENT_NAME_KEY, USER_AUTH_KEY, SETTINGS_KEY]
 
         for key in keys:
