@@ -3,50 +3,58 @@ import uuid
 import os
 import sqlite3
 from werkzeug.utils import secure_filename
+from constants import (DB_FILE, USERNAME_KEY, PASSWORD_KEY, FILES_PATH,)
+from print_settings import PrintSettings
+from user import User
+from add_doc_request import (AddDocRequest, DOCUMENT_NAME_KEY,)
+from document import Document
+import user_auth
+import json
 
-DB_FILE = 'test.db'
+STATUS_KEY = 'status'
 
-USERNAME_KEY = 'usr'
-PASSWORD_KEY = 'password'
-
-
-USER_INSERT_TEMP = "INSERT INTO users (uname, pwd, auth_key) VALUES (?, ?, ?)"
-USER_AUTH_TEMP = "SELECT pwd, auth_key FROM users WHERE uname=?"
-
-KEY_INSERT_TEMP = "INSERT INTO keys (auth_key, uname) VALUES (?, ?)"
-
+FILE_KEY = 'file'
 
 app = Flask(__name__)
-db_con = sqlite3.connect('test.db')
+user_auth.initialize()
 
-valid_extensions = ['.doc', '.docx', '.txt', '.pdf']
+try:
+    os.mkdir(FILES_PATH)
+except:
+    pass
 
-printer_queue = []
+printer_queue: list = []
 
-def allowed_file(filename):
-    _, extension = os.path.splitext(filename)
-    return '.' in filename and \
-           extension in valid_extensions
+@app.route('/add_doc', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        abort(400)
+
+    if 'json' not in request.files:
+        abort(400)
+
+    file = request.files[FILE_KEY]
+    if file.filename == '':
+        abort(400)
+
+    json_req = json.loads(request.files['json'].read())
+    json_req[DOCUMENT_NAME_KEY] = file.filename
+
+    doc_request = AddDocRequest.from_dict(json_req)
+    if not doc_request:
+        abort(400)
+
+    document = Document.from_add_doc_request(doc_request)
+    if not document:
+        abort(400)
+
+    filepath = os.path.join(FILES_PATH, document.get_saved_name())
+    file.save(filepath)
+
+    return jsonify(document.to_dict())
 
 @app.route('/', methods=['GET', 'POST'])
-def upload_file():
-    if request.method == 'POST':
-        # check if the post request has the file part
-        if 'file' not in request.files:
-            flash('No file part')
-            return redirect(request.url)
-        file = request.files['file']
-        # if user does not select file, browser also
-        # submit an empty part without filename
-        if file.filename == '':
-            flash('No selected file')
-            return redirect(request.url)
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            filepath = os.path.join('./', filename)
-            file.save(filepath)
-            return redirect(url_for('uploaded_file',
-                                    filename=filename))
+def fun():
     return '''
     <!doctype html>
     <title>Upload new File</title>
@@ -85,29 +93,19 @@ def register():
     if USERNAME_KEY in request.json and PASSWORD_KEY in request.json:
         ret_val = {}
 
-        db_con = sqlite3.connect(DB_FILE)
-        c = db_con.cursor()
-
         uname = request.json[USERNAME_KEY]
         pwd = request.json[PASSWORD_KEY]
-        auth_key = str(uuid.uuid4())
 
-        try:
-            c.execute(USER_INSERT_TEMP, (uname, pwd, auth_key))
-            c.execute(KEY_INSERT_TEMP, (auth_key, pwd))
+        user = user_auth.register_user(uname, pwd)
 
-            db_con.commit()
-            db_con.close()
+        if user is not None:
+            user_dict = user.to_dict()
+            user_dict[STATUS_KEY] = True
 
-            ret_val['status'] = True
-            ret_val['auth_key'] = auth_key
-            ret_val['uname'] = uname
+            return jsonify(user_dict)
 
-            return jsonify(ret_val)
-        except:
-            ret_val['status'] = False
+        return jsonify({STATUS_KEY: False})
 
-        return jsonify(ret_val)
     else:
         abort(400)
 
@@ -117,66 +115,23 @@ def authenticate():
         abort(400)
 
     if USERNAME_KEY in request.json and PASSWORD_KEY in request.json:
-        ret_val = { 'status': True }
-
-        db_con = sqlite3.connect(DB_FILE)
-        c = db_con.cursor()
-
         uname = request.json[USERNAME_KEY]
-        given_pwd = request.json[PASSWORD_KEY]
+        pwd = request.json[PASSWORD_KEY]
 
-        if uname == '' or given_pwd == '':
-            abort(400)
+        user = user_auth.authenticate_user(uname, pwd)
 
-        pwd = ''
-        auth_key = ''
+        if user is not None:
+            user_dict = user.to_dict()
+            user_dict[STATUS_KEY] = True
 
-        try:
-            c.execute(USER_AUTH_TEMP, (uname,))
-            response = c.fetchall()[0]
-            pwd = response[0]
-            auth_key = response[1]
+            return jsonify(user_dict)
 
-        except:
-            ret_val['status'] = False
+        return jsonify({STATUS_KEY: False})
 
-        if pwd == given_pwd:
-            ret_val['auth_key'] = auth_key
-            ret_val['usr'] = uname
-
-        else:
-            ret_val['status'] = False
-
-        return jsonify(ret_val)
     else:
         abort(400)
 
 
 
 if __name__ == '__main__':
-    db_con = sqlite3.connect(DB_FILE)
-
-    auth_keys_table='''CREATE TABLE keys (
-        auth_key text PRIMARY KEY,
-        uname text NOT NULL)'''
-
-    users_table = '''CREATE TABLE users (
-        uname text PRIMARY KEY,
-        pwd text NOT NULL,
-        auth_key text NOT NULL)'''
-
-    c = db_con.cursor()
-    try:
-        c.execute(auth_keys_table)
-    except:
-        pass
-
-    try:
-        c.execute(users_table)
-    except:
-        pass
-
-    db_con.commit()
-    db_con.close()
-
     app.run(debug=True)
