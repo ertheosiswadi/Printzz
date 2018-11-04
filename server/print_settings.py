@@ -1,13 +1,9 @@
 from dataclasses import dataclass
 from typing import Optional
-
-DOUBLE_SIDED_KEY = 'double_sided'
-COLOR_KEY = 'color'
-COPIES_KEY = 'copies'
+from constants import (DOUBLE_SIDED_KEY, COLOR_KEY, COPIES_KEY,)
 
 @dataclass
 class PrintSettings:
-    '''Class for keeping track of an item in inventory.'''
     double_sided: bool = True
     copies: int = 1
     color: bool = False

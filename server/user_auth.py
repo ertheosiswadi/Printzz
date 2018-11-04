@@ -1,18 +1,22 @@
 import sqlite3
-from constants import DB_FILE
+from constants import (USER_DB_FILE, DATABASES_PATH, USER_ID_KEY, USERNAME_KEY, PASSWORD_KEY,)
 from typing import Optional
 from user import User
 import uuid
+import os
 from passlib.hash import pbkdf2_sha256
 
-KEYS_TABLE='''CREATE TABLE keys (
-            auth_key text PRIMARY KEY,
-            uname text NOT NULL)'''
+KEYS_TABLE = 'keys'
+USER_TABLE = 'users'
 
-USER_TABLE = '''CREATE TABLE users (
-            uname text PRIMARY KEY,
-            pwd text NOT NULL,
-            auth_key text NOT NULL)'''
+KEYS_TABLE_INIT = f'''CREATE TABLE {KEYS_TABLE} (
+                {USER_ID_KEY} text PRIMARY KEY,
+                {USERNAME_KEY} text NOT NULL)'''
+
+USER_TABLE_INIT = f'''CREATE TABLE {USER_TABLE} (
+                {USERNAME_KEY} text PRIMARY KEY,
+                {PASSWORD_KEY} text NOT NULL,
+                {USER_ID_KEY} text NOT NULL)'''
 
 def hash_password(password):
     return pbkdf2_sha256.hash(password)
@@ -20,12 +24,16 @@ def hash_password(password):
 def verify_password(password, password_hash):
     return pbkdf2_sha256.verify(password, password_hash)
 
+def get_con():
+    database_path = os.path.join(DATABASES_PATH, USER_DB_FILE)
+    db_con = sqlite3.connect(database_path)
+    return (db_con, db_con.cursor(),)
+
 def get_user(auth_key) -> Optional[User]:
-    db_con = sqlite3.connect(DB_FILE)
+    db_con, cursor = get_con()
 
-    AUTH_USER_TEMP = "SELECT uname FROM keys WHERE auth_key=?"
+    AUTH_USER_TEMP = f"SELECT {USERNAME_KEY} FROM {KEYS_TABLE} WHERE {USER_ID_KEY} = ?"
 
-    cursor = db_con.cursor()
     cursor.execute(AUTH_USER_TEMP, (auth_key,))
     result = cursor.fetchone()
 
@@ -37,11 +45,10 @@ def get_user(auth_key) -> Optional[User]:
     return User(result[0], auth_key)
 
 def user_exists(username) -> bool:
-    db_con = sqlite3.connect(DB_FILE)
+    db_con, cursor = get_con()
 
-    USER_EXISTS_TEMP = "SELECT uname FROM users WHERE uname=?"
+    USER_EXISTS_TEMP = f"SELECT {USERNAME_KEY} FROM {USER_TABLE} WHERE {USERNAME_KEY} = ?"
 
-    cursor = db_con.cursor()
     cursor.execute(USER_EXISTS_TEMP, (username,))
     result = cursor.fetchone()
 
@@ -53,17 +60,16 @@ def user_exists(username) -> bool:
     return True
 
 def register_user(username, password) -> Optional[User]:
-    db_con = sqlite3.connect(DB_FILE)
+    db_con, cursor = get_con()
 
-    USER_INSERT_TEMP = "INSERT INTO users (uname, pwd, auth_key) VALUES (?, ?, ?)"
-    KEY_INSERT_TEMP = "INSERT INTO keys (auth_key, uname) VALUES (?, ?)"
+    USER_INSERT_TEMP = f"INSERT INTO {USER_TABLE} ({USERNAME_KEY}, {PASSWORD_KEY}, {USER_ID_KEY}) VALUES (?, ?, ?)"
+    KEY_INSERT_TEMP = f"INSERT INTO {KEYS_TABLE} ({USER_ID_KEY}, {USERNAME_KEY}) VALUES (?, ?)"
 
     if user_exists(username):
         return None
 
     auth_key = str(uuid.uuid4())
 
-    cursor = db_con.cursor()
     cursor.execute(USER_INSERT_TEMP, (username, hash_password(password), auth_key,))
     cursor.execute(KEY_INSERT_TEMP, (auth_key, username,))
 
@@ -73,11 +79,10 @@ def register_user(username, password) -> Optional[User]:
     return User(username, auth_key)
 
 def authenticate_user(username, password) -> Optional[User]:
-    db_con = sqlite3.connect(DB_FILE)
+    db_con, cursor = get_con()
 
-    USER_AUTH_TEMP = "SELECT pwd, auth_key FROM users WHERE uname=?"
+    USER_AUTH_TEMP = f"SELECT {PASSWORD_KEY}, {USER_ID_KEY} FROM {USER_TABLE} WHERE {USERNAME_KEY} = ?"
 
-    cursor = db_con.cursor()
     cursor.execute(USER_AUTH_TEMP, (username,))
     result = cursor.fetchone()
 
@@ -91,17 +96,21 @@ def authenticate_user(username, password) -> Optional[User]:
 
     return User(username, result[1])
 
-def initialize():
-    db_con = sqlite3.connect(DB_FILE)
-
-    c = db_con.cursor()
+def initialize() -> None:
     try:
-        c.execute(KEYS_TABLE)
+        os.mkdir(DATABASES_PATH)
+    except:
+        pass
+
+    db_con, cursor = get_con()
+
+    try:
+        cursor.execute(KEYS_TABLE_INIT)
     except:
         pass
 
     try:
-        c.execute(USER_TABLE)
+        cursor.execute(USER_TABLE_INIT)
     except:
         pass
 

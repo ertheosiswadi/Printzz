@@ -1,7 +1,7 @@
 ENV/
-test.db
-dbtest.py
 files/
 .vscode/
 .mypy_cache/
+databases/
 __pycache__/
+dbtest.py
