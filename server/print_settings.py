@@ -23,7 +23,12 @@ class PrintSettings:
         color = settings_dict[COLOR_KEY]
         copies = settings_dict[COPIES_KEY]
 
-        return PrintSettings(double_sided, copies, color)
+        settings = PrintSettings(double_sided, copies, color)
+
+        if not settings.validate():
+            return None
+
+        return settings
 
     def to_dict(self) -> dict:
         return {
