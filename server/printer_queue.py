@@ -79,7 +79,6 @@ def get_con():
     return (db_con, db_con.cursor(),)
 
 def load_doc(user: User, doc_name: str) -> Optional[str]:
-    db_con, cursor = get_con()
 
     FETCH_DOC = f"SELECT * FROM {DOCUMENT_LOADING_TABLE} WHERE {USER_ID_KEY} = ?"
     LOAD_DOC = f"INSERT INTO {DOCUMENT_LOADING_TABLE} ({USER_ID_KEY}, {USERNAME_KEY}, {DOC_ID_KEY}, {DOC_NAME_KEY}, {EXTENSION_KEY}) VALUES (?, ?, ?, ?, ?)"
@@ -89,6 +88,8 @@ def load_doc(user: User, doc_name: str) -> Optional[str]:
 
     if not file_tuple:
         return None
+
+    db_con, cursor = get_con()
 
     filename, extension = file_tuple
 
@@ -123,6 +124,7 @@ def unload_doc(user: User, settings: PrintSettings) -> Optional[Document]:
     loaded_doc = cursor.fetchone()
 
     if not loaded_doc:
+        db_con.close()
         return None
 
     cursor.execute(REMOVE_FROM_LOADING, (user.user_id,))
