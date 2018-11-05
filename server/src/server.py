@@ -90,7 +90,7 @@ def get_doc():
         return jsonify(create_return_json(False))
 
     document = printer_queue.top()
-    filepath = os.path.join(FILES_PATH, document.get_saved_name())
+    filepath = os.path.join('../' + FILES_PATH, document.get_saved_name())
     print(filepath)
     return send_file(filepath, attachment_filename=document.get_saved_name())
 
