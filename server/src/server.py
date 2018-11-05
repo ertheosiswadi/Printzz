@@ -1,17 +1,21 @@
-from flask import Flask, request, abort, jsonify, redirect, url_for, flash, send_file
-import uuid
+from .constants import (USERNAME_KEY, PASSWORD_KEY, FILES_PATH, \
+                        USER_ID_KEY, STATUS_KEY, INPUT_FILE_KEY, \
+                        DATA_KEY,)
+from .document import (Document,)
+from .print_settings import (PrintSettings,)
+from .user import (User,)
+from . import (user_auth, printer_queue,)
+
+from flask import (Flask, request, abort, \
+                   jsonify, redirect, url_for, \
+                   flash, send_file,)
+from flask_cors import (CORS,)
+from typing import (List,)
+from werkzeug.utils import (secure_filename,)
+import json
 import os
 import sqlite3
-from werkzeug.utils import secure_filename
-from constants import (USERNAME_KEY, PASSWORD_KEY, FILES_PATH, USER_ID_KEY, STATUS_KEY, INPUT_FILE_KEY, DATA_KEY,)
-from print_settings import PrintSettings
-from user import User
-from document import Document
-from typing import List
-from flask_cors import CORS
-import user_auth
-import printer_queue
-import json
+import uuid
 
 user_auth.initialize()
 printer_queue.initialize()
@@ -169,8 +173,3 @@ def authenticate():
 
     else:
         return jsonify(create_return_json(False))
-
-
-
-if __name__ == '__main__':
-    app.run(debug=True)

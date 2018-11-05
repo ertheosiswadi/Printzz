@@ -1,10 +1,12 @@
-import sqlite3
-from constants import (USER_DB_FILE, DATABASES_PATH, USER_ID_KEY, USERNAME_KEY, PASSWORD_KEY,)
-from typing import Optional
-from user import User
-import uuid
-import os
+from .constants import (USER_DB_FILE, DATABASES_PATH, USER_ID_KEY, \
+                        USERNAME_KEY, PASSWORD_KEY,)
+from .user import User
+
 from passlib.hash import pbkdf2_sha256
+from typing import Optional
+import os
+import sqlite3
+import uuid
 
 KEYS_TABLE = 'keys'
 USER_TABLE = 'users'

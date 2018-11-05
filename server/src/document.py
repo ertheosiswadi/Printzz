@@ -1,12 +1,15 @@
-from typing import Optional, Tuple
-from print_settings import PrintSettings
-from dataclasses import dataclass
-from werkzeug.utils import secure_filename
-from user import User
-from constants import  (USERNAME_KEY, USER_ID_KEY, DOC_NAME_KEY, EXTENSION_KEY, DOC_ID_KEY, PROGRESS_KEY, SETTINGS_KEY,)
-import user_auth
-import uuid
+from .constants import (USERNAME_KEY, USER_ID_KEY, DOC_NAME_KEY, \
+                        EXTENSION_KEY, DOC_ID_KEY, PROGRESS_KEY, \
+                        SETTINGS_KEY,)
+from .print_settings import (PrintSettings,)
+from .user import (User,)
+from . import (user_auth,)
+
+from dataclasses import (dataclass,)
+from typing import (Optional, Tuple,)
+from werkzeug.utils import (secure_filename,)
 import os
+import uuid
 
 def get_doc_name(doc_id: str, ext: str) -> str:
     return doc_id + '.' + ext

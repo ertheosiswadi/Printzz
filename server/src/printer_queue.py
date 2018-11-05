@@ -1,14 +1,17 @@
-from print_settings import (PrintSettings,)
-from document import (Document, get_doc_name,)
-from constants import (QUEUE_FILE, FILES_PATH, DATABASES_PATH, DOC_ID_KEY, USER_ID_KEY, USERNAME_KEY, DOC_NAME_KEY, EXTENSION_KEY, DOUBLE_SIDED_KEY, COLOR_KEY, COPIES_KEY,)
-from user import User
+from .constants import (QUEUE_FILE, FILES_PATH, DATABASES_PATH, \
+                        DOC_ID_KEY, USER_ID_KEY, USERNAME_KEY, \
+                        DOC_NAME_KEY, EXTENSION_KEY, DOUBLE_SIDED_KEY, \
+                        COLOR_KEY, COPIES_KEY,)
+from .document import (Document, get_doc_name,)
+from .print_settings import (PrintSettings,)
+from .user import (User,)
 
-from werkzeug.utils import secure_filename
+from typing import (Optional, Tuple, List,)
+from werkzeug.utils import (secure_filename,)
+import enum
 import sqlite3
 import os
-import enum
 import uuid
-from typing import (Optional, Tuple, List,)
 
 valid_extensions = ['doc', 'docx', 'txt', 'pdf']
 
