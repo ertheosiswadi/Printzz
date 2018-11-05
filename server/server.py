@@ -46,6 +46,8 @@ def upload_settings():
         return jsonify(create_return_json(False))
 
     settings = PrintSettings.from_dict(request.json)
+    if not settings:
+        return None
 
     document = printer_queue.unload_doc(user, settings)
     if not document:
