@@ -66,6 +66,7 @@ def register_user(username, password) -> Optional[User]:
     KEY_INSERT_TEMP = f"INSERT INTO {KEYS_TABLE} ({USER_ID_KEY}, {USERNAME_KEY}) VALUES (?, ?)"
 
     if user_exists(username):
+        db_con.close()
         return None
 
     auth_key = str(uuid.uuid4())
