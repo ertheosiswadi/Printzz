@@ -1,15 +1,15 @@
 from dataclasses import dataclass
 
-USERNAME_KEY = 'uname'
-AUTH_KEY = 'auth_key'
+USERNAME_KEY = 'username'
+USER_ID_KEY = 'user_id'
 
 @dataclass
 class User:
     username: str
-    auth_key: str
+    user_id: str
 
     def to_dict(self) -> dict:
         return {
             USERNAME_KEY: self.username,
-            AUTH_KEY: self.auth_key
-        } 
+            USER_ID_KEY: self.user_id
+        }
