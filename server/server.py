@@ -47,7 +47,7 @@ def upload_settings():
 
     settings = PrintSettings.from_dict(request.json)
     if not settings:
-        return None
+        return jsonify(create_return_json(False))
 
     document = printer_queue.unload_doc(user, settings)
     if not document:
@@ -112,10 +112,18 @@ def pop_doc():
     return jsonify(create_return_json(True))
 
 @app.route('/get_queue', methods=['GET'])
-def read_queue():
-    obj_queue = []
-    doc_list = printer_queue.get_queue()
+def get_queue():
+    user_id = request.args.get(USER_ID_KEY, type = str)
+    if user_id:
+        user = user_auth.get_user(user_id)
+        if not user:
+            return jsonify(create_return_json(False))
 
+        doc_list = printer_queue.get_queue(user)
+    else:
+        doc_list = printer_queue.get_queue()
+
+    obj_queue = []
     for doc in doc_list:
         obj_queue.append(doc.to_dict())
 

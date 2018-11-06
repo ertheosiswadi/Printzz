@@ -174,7 +174,7 @@ def tuple_to_doc(doc_tuple, settings_tuple) -> Document:
 
 
 
-def get_queue() -> List[Document]:
+def get_queue(user: Optional[User] = None) -> List[Document]:
     db_con, cursor = get_con()
 
     GET_DOC_QUEUE = f"SELECT * FROM {QUEUE_TABLE}"
@@ -193,7 +193,10 @@ def get_queue() -> List[Document]:
         settings_tuple = next(x for x in settings_response if doc_tuple[DocumentIndex.DOC_ID_INDEX.value] == x[SettingsIndex.DOC_ID_INDEX.value])
         doc_list.append(tuple_to_doc(doc_tuple, settings_tuple))
 
-    return doc_list
+    if not user:
+        return doc_list
+    else:
+        return [doc for doc in doc_list if doc.user_id == user.user_id]
 
 def top() -> Optional[Document]:
     if get_len() <= 0:
