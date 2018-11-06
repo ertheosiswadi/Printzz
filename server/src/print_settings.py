@@ -1,6 +1,7 @@
+from .constants import (DOUBLE_SIDED_KEY, COLOR_KEY, COPIES_KEY,)
+
 from dataclasses import dataclass
 from typing import Optional
-from constants import (DOUBLE_SIDED_KEY, COLOR_KEY, COPIES_KEY,)
 
 @dataclass
 class PrintSettings:

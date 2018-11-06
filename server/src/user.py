@@ -1,7 +1,6 @@
-from dataclasses import dataclass
+from .constants import (USERNAME_KEY, USER_ID_KEY,)
 
-USERNAME_KEY = 'username'
-USER_ID_KEY = 'user_id'
+from dataclasses import dataclass
 
 @dataclass
 class User:
