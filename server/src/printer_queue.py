@@ -1,7 +1,7 @@
 from .constants import (QUEUE_FILE, FILES_PATH, DATABASES_PATH, \
                         DOC_ID_KEY, USER_ID_KEY, USERNAME_KEY, \
                         DOC_NAME_KEY, EXTENSION_KEY, DOUBLE_SIDED_KEY, \
-                        COLOR_KEY, COPIES_KEY,)
+                        COLOR_KEY, COPIES_KEY, PRINTER_STATUS_KEY,)
 from .document import (Document, get_doc_name,)
 from .print_settings import (PrintSettings,)
 from .user import (User,)
@@ -21,6 +21,7 @@ CURRENT_POSITION_KEY = 'pos'
 QUEUE_TABLE = 'queue'
 SETTINGS_TABLE = 'settings'
 DOCUMENT_LOADING_TABLE = 'loading'
+PRINTER_STATUS_TABLE = 'status'
 
 
 QUEUE_TABLE_INIT = f'''CREATE TABLE {QUEUE_TABLE} (
@@ -44,6 +45,10 @@ DOCUMENT_LOADING_TABLE_INIT = f'''CREATE TABLE {DOCUMENT_LOADING_TABLE} (
             {DOC_ID_KEY} text NOT NULL,
             {DOC_NAME_KEY} text NOT NULL,
             {EXTENSION_KEY} text NOT NULL)'''
+
+PRINTER_STATUS_TABLE_INIT = f'''CREATE TABLE {PRINTER_STATUS_TABLE} (
+            {PRINTER_STATUS_KEY} INTEGER PRIMARY KEY)'''
+
 
 class DocumentIndex(enum.Enum):
     DOC_ID_INDEX = 0
@@ -157,7 +162,7 @@ def get_len() -> int:
 
 def tuple_to_doc(doc_tuple, settings_tuple) -> Document:
     settings = PrintSettings( \
-        bool(settings_tuple[SettingsIndex.DOUBLE_SIDED_INDEX.value]), \
+        int(settings_tuple[SettingsIndex.DOUBLE_SIDED_INDEX.value]), \
         settings_tuple[SettingsIndex.COPIES_INDEX.value], \
         bool(settings_tuple[SettingsIndex.COLOR_INDEX.value]))
 
@@ -260,6 +265,51 @@ def add_to_queue(document: Document) -> None:
     db_con.commit()
     db_con.close()
 
+def delete_doc(user: User, doc_id: str) -> bool:
+    db_con, cursor = get_con()
+
+    FIND_DOC = f"SELECT * FROM {QUEUE_TABLE} WHERE {DOC_ID_KEY} = ?"
+    DELETE_FROM_QUEUE = f"DELETE FROM {QUEUE_TABLE} WHERE {DOC_ID_KEY} = ?"
+    DELETE_FROM_SETTINGS = f"DELETE FROM {SETTINGS_TABLE} WHERE {DOC_ID_KEY} = ?"
+    ADJUST_POSITION = f"UPDATE {QUEUE_TABLE} SET {CURRENT_POSITION_KEY} = {CURRENT_POSITION_KEY} - 1 WHERE {CURRENT_POSITION_KEY} > ?"
+
+    cursor.execute(FIND_DOC, (doc_id,))
+    doc_info = cursor.fetchone()
+
+    if doc_info is None or doc_info[DocumentIndex.USER_ID_INDEX.value] != user.user_id:
+        return False
+
+    cursor.execute(DELETE_FROM_QUEUE, (doc_id,))
+    cursor.execute(DELETE_FROM_SETTINGS, (doc_id,))
+    cursor.execute(ADJUST_POSITION, (doc_info[DocumentIndex.CURRENT_POSITION_INDEX.value],))
+
+    db_con.commit()
+    db_con.close()
+
+    return True
+
+def update_status(status: bool) -> None:
+    db_con, cursor = get_con()
+
+    UPDATE_STATUS = f"UPDATE {PRINTER_STATUS_TABLE} SET {PRINTER_STATUS_KEY} = ?"
+
+    cursor.execute(UPDATE_STATUS, (int(status),))
+
+    db_con.commit()
+    db_con.close()
+
+def get_status() -> bool:
+    db_con, cursor = get_con()
+
+    GET_STATUS = f"SELECT {PRINTER_STATUS_KEY} FROM {PRINTER_STATUS_TABLE}"
+
+    cursor.execute(GET_STATUS)
+    status = cursor.fetchone()
+
+    db_con.close()
+
+    return bool(status[0])
+
 def initialize() -> None:
     try:
         os.mkdir(DATABASES_PATH)
@@ -279,6 +329,13 @@ def initialize() -> None:
 
     try:
         cursor.execute(DOCUMENT_LOADING_TABLE_INIT)
+    except:
+        pass
+
+    try:
+        cursor.execute(PRINTER_STATUS_TABLE_INIT)
+        INSERT_TRUE = f"INSERT INTO {PRINTER_STATUS_TABLE} ({PRINTER_STATUS_KEY}) VALUES (1)"
+        cursor.execute(INSERT_TRUE)
     except:
         pass
 

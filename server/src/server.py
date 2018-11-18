@@ -1,6 +1,6 @@
 from .constants import (USERNAME_KEY, PASSWORD_KEY, FILES_PATH, \
                         USER_ID_KEY, STATUS_KEY, INPUT_FILE_KEY, \
-                        DATA_KEY,)
+                        DATA_KEY, DOC_ID_KEY, PRINTER_STATUS_KEY,)
 from .document import (Document,)
 from .print_settings import (PrintSettings,)
 from .user import (User,)
@@ -10,8 +10,10 @@ from flask import (Flask, request, abort, \
                    jsonify, redirect, url_for, \
                    flash, send_file,)
 from flask_cors import (CORS,)
+from flask_restplus import inputs
 from typing import (List,)
 from werkzeug.utils import (secure_filename,)
+
 import json
 import os
 import sqlite3
@@ -99,8 +101,8 @@ def get_settings():
     if printer_queue.get_len() is 0:
         return jsonify(create_return_json(False))
 
-    settings_dict = printer_queue.top().settings.to_dict()
-    return jsonify(create_return_json(True, settings_dict))
+    document = printer_queue.top()
+    return jsonify(create_return_json(True, document.to_dict()))
 
 @app.route('/pop_doc', methods=['GET'])
 def pop_doc():
@@ -112,6 +114,23 @@ def pop_doc():
     os.remove(filepath)
 
     printer_queue.pop()
+
+    return jsonify(create_return_json(True))
+
+@app.route('/delete_doc', methods=['GET'])
+def delete_doc():
+    user_id = request.args.get(USER_ID_KEY, type = str)
+    doc_id = request.args.get(DOC_ID_KEY, type = str)
+
+    if user_id is None or doc_id is None:
+        return jsonify(create_return_json(False))
+
+    user = user_auth.get_user(user_id)
+    if not user:
+        return jsonify(create_return_json(False))
+
+    if not printer_queue.delete_doc(user, doc_id):
+        return jsonify(create_return_json(False))
 
     return jsonify(create_return_json(True))
 
@@ -173,3 +192,18 @@ def authenticate():
 
     else:
         return jsonify(create_return_json(False))
+
+@app.route('/printer_status', methods=['POST'])
+def update_printer_status():
+    printer_status = request.args.get(PRINTER_STATUS_KEY, type = inputs.boolean)
+
+    if printer_status is None:
+        return jsonify(create_return_json(False))
+
+    printer_queue.update_status(printer_status)
+
+    return jsonify(create_return_json(True))
+
+@app.route('/printer_status', methods=['GET'])
+def get_printer_status():
+    return jsonify(create_return_json(printer_queue.get_status()))
