@@ -14,6 +14,7 @@ EXTENSION_KEY = 'ext'
 DOC_ID_KEY = 'doc_id'
 PROGRESS_KEY = 'progress'
 SETTINGS_KEY = 'settings'
+PRINTER_STATUS_KEY = 'status'
 
 # Keys for settings fields
 DOUBLE_SIDED_KEY = 'double_sided'
