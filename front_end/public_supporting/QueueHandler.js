@@ -17,17 +17,26 @@ $(document).ready(() =>{
 	});
 
 	$(document).on("click", "button.btn-danger" , function() {
+		event.stopImmediatePropagation();
+		console.log('delete button is clicked. id-> ' + event.target.id);
        	var index = event.target.id;
 		console.log(doc_id[index]);
 
 		var docid = doc_id[index];
 		var auth_key = sessionStorage.getItem('auth_key');
-		var uri = 'https://printzz.herokuapp.com/delete_doc?doc_id=' + docid + '?auth_key=' + auth_key;
+		var uri = 'https://printzz.herokuapp.com/delete_doc?doc_id=' + docid + '&user_id=' + auth_key;
 		
 		//UNCOMMENT BELOW TO ACTIVATE DELETE_DOC
-		// $.get(uri, function(data, status){
-	 //       updateQueue();
-	 //    });
+		$.get(uri, function(data, status){
+			console.log('performing a delete request..')
+			if(data['status'])
+			{
+				updateQueue();
+			}
+	       	else{
+	       		alert('Error: cannot delete doc')
+	       	}
+	    });
 
 		//get the id of the button clicked
 		//the id is the index will correspond to the document id
@@ -101,26 +110,26 @@ function updateQueue()
 	   	}
 	});
 
-	//updatePrinterStatus();
+	updatePrinterStatus();
 }
 
-// function updatePrinterStatus()
-// {
-// 	var auth_key = sessionStorage.getItem('auth_key');
-// 	var uri = 'https://printzz.herokuapp.com/printer_status';
-// 	$.get(uri, function(data, status){
-// 		//get status from data parameter
-// 		var p_status = true;
-// 		if(p_status)
-// 		{
-// 			$('.circle').css("background-color", "#006400");
-// 		}
-// 		else
-// 		{
-// 			$('.circle').css("background-color", "#B22222");
-// 		}
-// 	}
-// }
+function updatePrinterStatus()
+{
+	var auth_key = sessionStorage.getItem('auth_key');
+	var uri = 'https://printzz.herokuapp.com/printer_status';
+	$.get(uri, function(data, status){
+		//get status from data parameter
+		var p_status = true;
+		if(p_status)
+		{
+			$('.circle').css("background-color", "#006400");
+		}
+		else
+		{
+			$('.circle').css("background-color", "#B22222");
+		}
+	});
+}
 
 function showNoFiles()
 {
