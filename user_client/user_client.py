@@ -13,58 +13,74 @@ def sign_in(username, password, need_register):
         resp_obj = requests.post(url+'login', json=data_json)       # Login
     resp_json = resp_obj.json()
     
-    # If Registration Successful, Return Key
+    # If Successful, Return the Key
     if (resp_json["status"]):
+        print ("User Authenticated")
         return resp_json["data"]["user_id"]
     
     # Otherwise, End the Program
     else:
-        if (need_register):
-            print ("ERROR: Account Could Not Be Created")
-        else:
-            print ("ERROR: Login Could Not Be Completed")
+        print ("ERROR: " + resp_json['error'])
+        exit()  
+
+def upload_file(key, file_in):
+    
+    # Upload File to Server
+    params = { 'user_id': key }
+    with open(file_in, 'rb') as file:
+        files = {'input_file': file}
+        res = requests.post(url + 'add_doc_file', files=files, params=params)
+
+        # Exit on Error
+        res_dict =  res.json()
+        if res_dict['status'] is False:
+            print ("ERROR: " + res_dict['error'])
+            exit()
+    
+    # Upload Settings to Server
+    params = { 'user_id': key }
+    settings = {
+       'double_sided': 0,
+       'copies': 1,
+       'color': False
+    }
+    res = requests.post(url + 'add_doc_settings', json=settings, params=params)
+
+    # Exit on Error
+    res_dict =  res.json()
+    if res_dict['status'] is False:
+        print ("ERROR: " + res_dict['error'])
         exit()
 
+    # Notify If Upload Successful
+    print ("File Upload Successful")
+    
 
-def login_parser():
+def main():
     # Parse Command Line Arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("-user", action="store")
     parser.add_argument("-pwd", action="store")
     parser.add_argument("-register", action="store_true")
+    parser.add_argument("-file", action="store")
     args = parser.parse_args()
     
     # Check That We Were Provided Username and Password
-    if ( (args.user == None) or (args.user == None) ):
+    if ( (args.user == None) or (args.pwd == None) ):
         print ("ERROR: Must Provide Login Information")
         exit()
 
-    # Register or Sign the User In, Return Key
-    return sign_in(args.user, args.pwd, args.register)
-
-def upload_file(key):
-    params = { 'user_id': key }
-    with open('test.txt', 'rb') as file:
-        files = {'input_file': file}
-
-        res = requests.post(url + 'add_doc_file', files=files, params=params)
-    
-    params = { 'user_id': key }
-
-    settings = {
-        'double_sided': True,
-        'copies': 19,
-        'color': False
-    }
-
-    res = requests.post(url + 'add_doc_settings', json=settings, params=params)
-
-    print(res.text)
+    # Register or Sign the User In
+    key = sign_in(args.user, args.pwd, args.register)
     
 
-def main():
-    user_key = login_parser()
-    upload_file(user_key)
+    ############################
+    ###       ACTIONS        ###
+    ############################
+
+    # Upload File
+    if (args.file != None):
+        upload_file(key, args.file)
 
 
 if __name__ == "__main__":
