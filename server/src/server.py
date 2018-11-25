@@ -9,7 +9,7 @@ from . import (user_auth, printer_queue,)
 
 from flask import (Flask, request, abort, \
                    jsonify, redirect, url_for, \
-                   flash, send_file,)
+                   flash, send_file, render_template,)
 from flask_cors import (CORS,)
 from flask_restplus import inputs
 from typing import (List,)
@@ -39,6 +39,30 @@ def create_return_json(status, data=None, error=None):
         ret_dict[ERROR_KEY] = error
 
     return ret_dict
+
+@app.route('/', methods=['GET'])
+def login_page():
+    return render_template('login.html')
+
+@app.route('/html/<page>', methods=['GET'])
+def page_selection(page):
+    template = ''
+    if page == 'p_upload':
+        template = 'print_upload.html'
+    elif page == 'p_queue':
+        template = 'print_queue.html'
+    elif page == 'p_signup':
+        template = 'sign_up.html'
+    elif page == 'p_login':
+        template = 'login.html'
+    elif page == 'p_settings':
+        template = 'print_settings.html'
+    elif page == 'p_review':
+        template = 'print_review.html'
+    elif page == 'p_success':
+        template = 'print_success.html'
+
+    return render_template(template)
 
 @app.route('/add_doc_settings', methods=['POST'])
 def upload_settings():

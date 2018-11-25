@@ -1,0 +1,109 @@
+<!-- Print settings -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PRINTZZ</title>
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/input_file.css') }}">
+    <style>
+      .navbar{
+        margin-bottom:0;
+        border-radius:0;
+      }
+    </style>
+
+  </head>
+  <body>
+    <nav class="navbar navbar-inverse">
+      <div class="container">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">PRINTZZ</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+          <ul class="nav navbar-nav">
+            <li class="active"><a href="#" id="signup_nav">Sign up<span class="sr-only">(current)</span></a></li>
+            <li class="active"><a href="#" id="login_nav">Log in<span class="sr-only">(current)</span></a></li>
+          </ul>
+        </div><!-- /.navbar-collapse -->
+      </div><!-- /.container-fluid -->
+    </nav>
+
+    <!-- JUMBOTRON -->
+    <div class="jumbotron text-center">
+      <div class="container">
+        <h1>PRINTZZ</h1>
+        <p>- Your Everyday Printer Solutions -</p>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="text-center">
+        <span class="border border-primary">
+          <img class="img-rounded" src="{{ url_for('static', filename='resource/monitor.png') }}" width="300px" height="auto">
+        </span>
+      </div>
+      <hr>
+
+<!--       <form>
+        <div class="form-group" style="margin-top: 50px">
+            <label>Upload File</label>
+            <input type="file">
+            <p class="help-block">Only png and jpg allowed</p>
+        </div>
+      </form> -->
+
+
+      <form id="form_test" method="post" enctype="multipart/form-data">
+        <input id="input_file" name="input_file" type="file" class="inputfile" style="display:none"/>
+        <h4 style="display:inline"><label class = "label label-primary" for="input_file" id="label_input_file" style="display:inline">Choose a file</label></h4>
+        <p style="display:inline" id="filename_label">No file chosen</p>
+        <hr>
+      </form>
+      <button id="button_upload" class="btn btn-success btn-lg btn-block">Next</button>
+<!--      <button class="btn btn-primary" > UploadX </button>
+
+       <form id="uploadForm" method="POST" action="localhost:3001/upload" enctype="multipart/form-data">
+
+        <div class="form-group">
+          <div class="input-group input-file" name="Fichier1">
+            <span class="input-group-btn">
+                  <button id="chooseButton" class="btn btn-default btn-choose" type="button">Choose</button>
+              </span>
+              <input type="file" name="#" id="input_file" style="position:absolute; top:-100px;visibility:hidden; height:0"/>
+              <input type="text" class="form-control" placeholder='Choose a file...' />
+              <span class="input-group-btn">
+                   <button class="btn btn-warning btn-reset" type="button">Reset</button>
+              </span>
+
+          </div>
+        </div>
+      </form> -->
+
+    </div>
+    <!-- <div class="container text-center">
+      <a id="nextButton" class="btn btn-success btn-lg btn-block">Next</a>
+    </div> -->
+
+    <div style="height:400px"></div>
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/UploadHandler.js') }}"></script>
+  </body>
+</html>
