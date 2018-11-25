@@ -5,7 +5,7 @@ from typing import Optional
 
 @dataclass
 class PrintSettings:
-    double_sided: bool = True
+    double_sided: int = 0
     copies: int = 1
     color: bool = False
 
@@ -39,7 +39,7 @@ class PrintSettings:
         }
 
     def validate(self) -> bool:
-        if not type(self.double_sided) is bool:
+        if not type(self.double_sided) is int:
             return False
 
         if not type(self.copies) is int:

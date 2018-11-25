@@ -9,29 +9,24 @@ refresh_time = 2
 print_time = 30
 
 def poll_server():    
+
     # Check if There is a File Ready to Print
-    settings_obj = requests.get(url+'get_doc_settings')
-    settings = settings_obj.json()
+    params = {'printer_id': 'e19e5d74-6ed2-41b6-ad21-ed1c8e7be7e1'}
+    settings = (requests.get(url+'get_doc_settings', params=params)).json()
     
     # Return to Loop if No File Exists
     if (settings['status'] == False):
         return
 
     # File Exists, So Download the Actual File
-    doc_obj = urllib.request.urlopen(url+'get_doc')
-    doc = doc_obj.read()
+    doc_url = url + 'get_doc?printer_id=' + params['printer_id']
+    doc = (urllib.request.urlopen(doc_url)).read()
+    print ("Received " + settings['data']['doc_name'] + " from " +\
+            settings['data']['username'])
 
-    # Check For Common File Headers
-    extension = ""
-    if ( (doc[0] == 80) and (doc[1] == 75) ):                # DOCX
-        extension = "docx"
-    elif ("%PDF-" in doc.splitlines()[0].decode('ascii')):   # PDF
-        extension = "pdf"
-    else:                                                    # TXT
-        extension = "txt"
-
-    # Write File to Disk
-    f = open("print."+extension, "wb")
+    # Write the File to Disk
+    extension = settings['data']['ext']
+    f = open("print." + extension, "wb")
     f.write(doc)
     f.close
 
@@ -39,9 +34,12 @@ def poll_server():
 
     # Generate Print Command Based on Provided Options
     print_cmd = "lp print." + extension + " -n "
-    print_cmd += str(settings['data']['copies']) + " "      # Number of Copies
-    if (settings['data']['double_sided']):                  # Double-Sided
+    print_cmd += str(settings['data']['settings']['copies']) + " "  # Number of Copies
+    if (settings['data']['settings']['double_sided'] == 1):         # Double-Sided, Long Edge
         print_cmd += "-o sides=two-sided-long-edge "
+    elif (settings['data']['settings']['double_sided'] == 2):       # Double-Sided, Short Edge
+        print_cmd += "-o sides=two-sided-short-edge "
+
     #TODO Need Printer-Specific Option for Setting Color
     
     # Issue Print Command to the System
@@ -49,8 +47,14 @@ def poll_server():
     print (print_cmd)
 
     # Perform Cleanup
-    #subprocess.call('rm -f print.*', shell=True)
-    #requests.get(url+'pop_doc')
+    subprocess.call('rm -f print.*', shell=True)
+    pop_res = (requests.get(url+'pop_doc', params=params)).json()
+
+    # Check for Successful Pop
+    if pop_res['status'] == False:
+        print ("ERROR: " + pop_res['error'])
+        exit()
+    return
     
 def main():
     # Delete Any Existing Print Files
