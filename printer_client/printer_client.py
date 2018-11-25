@@ -39,11 +39,11 @@ def poll_server():
         print_cmd += "-o sides=two-sided-long-edge "
     elif (settings['data']['settings']['double_sided'] == 2):       # Double-Sided, Short Edge
         print_cmd += "-o sides=two-sided-short-edge "
-
-    #TODO Need Printer-Specific Option for Setting Color
+    if (settings['data']['settings']['color'] == False):            # Color Printing
+        print_cmd += "-oColorModel=KGray"
     
     # Issue Print Command to the System
-    #subprocess.call(print_cmd, shell=True)
+    subprocess.call(print_cmd, shell=True)
     print (print_cmd)
 
     # Perform Cleanup
@@ -67,5 +67,4 @@ def main():
 
 
 if __name__ == "__main__":
-    #main()
-    poll_server()
+    main()
