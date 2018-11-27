@@ -30,10 +30,12 @@ def poll_server():
     f.write(doc)
     f.close
 
-    # TODO Check If .docx can be printed directly, or need to convert
+    # Convert non-pdf's to pdf
+    if (extension != 'pdf'):
+        subprocess.call(['soffice', '--headless', '--convert-to', 'pdf', 'print.'+extension], shell=False)
 
     # Generate Print Command Based on Provided Options
-    print_cmd = "lp print." + extension + " -n "
+    print_cmd = "lp print.pdf -n "
     print_cmd += str(settings['data']['settings']['copies']) + " "  # Number of Copies
     if (settings['data']['settings']['double_sided'] == 1):         # Double-Sided, Long Edge
         print_cmd += "-o sides=two-sided-long-edge "
