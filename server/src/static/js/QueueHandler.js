@@ -120,6 +120,7 @@ function updatePrinterStatus()
 	$.get(uri, function(data, status){
 		//get status from data parameter
 		var p_status = data['status'];
+		console.log(data)
 		if(p_status)
 		{
 			$('.circle').css("background-color", "#006400");

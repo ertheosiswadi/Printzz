@@ -20,16 +20,14 @@ $(document).ready(function()
             	var status = data['status'];
             	if(status)
             	{
-	            	var auth_key = data['data']['user_id'];
+					sessionStorage.setItem('auth_key',data['data']['user_id']);
+					//alert('saved auth_key (login)-> ' + sessionStorage.getItem('auth_key'));
 
-	            	//save auth_key in user's session
-	          		sessionStorage.setItem('auth_key',auth_key);
-				    //alert('unsaved auth_key-> ' + auth_key)
-
-					$.get('/html/p_login', (data, status) => {
+					//proceed if success
+					$.get('/html/p_queue', function(data, status){
 						$("#body").html(data);
 					});
-				}
+     			}
 				else
 				{
 					alert('Error: username is taken');
@@ -38,7 +36,7 @@ $(document).ready(function()
 			error: function(textStatus, errorThrown) {
                 alert('Error: server error');
             }
-   
+
         });
 	});
 
@@ -58,5 +56,5 @@ $(document).ready(function()
 		$.get('/html/p_login', (data, status) => {
 			$("#body").html(data);
 		});
-	});	
+	});
 });
