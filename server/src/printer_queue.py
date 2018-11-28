@@ -334,7 +334,7 @@ def initialize() -> None:
 
     try:
         cursor.execute(PRINTER_STATUS_TABLE_INIT)
-        INSERT_TRUE = f"INSERT INTO {PRINTER_STATUS_TABLE} ({PRINTER_STATUS_KEY}) VALUES (1)"
+        INSERT_TRUE = f"INSERT INTO {PRINTER_STATUS_TABLE} ({PRINTER_STATUS_KEY}) VALUES (0)"
         cursor.execute(INSERT_TRUE)
     except:
         pass

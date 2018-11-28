@@ -6,7 +6,7 @@ $(document).ready(() =>{
 
 	updateQueue();
 	var interval_id = setInterval(updateQueue, 4000);
-	
+
 	$('#button_addfile').click(function(){
 
 		clearInterval(interval_id);
@@ -25,7 +25,7 @@ $(document).ready(() =>{
 		var docid = doc_id[index];
 		var auth_key = sessionStorage.getItem('auth_key');
 		var uri = 'https://printzz.herokuapp.com/delete_doc?doc_id=' + docid + '&user_id=' + auth_key;
-		
+
 		//UNCOMMENT BELOW TO ACTIVATE DELETE_DOC
 		$.get(uri, function(data, status){
 			console.log('performing a delete request..')
@@ -88,7 +88,7 @@ function updateQueue()
 	   	var fileList = {
    			files:data
 	   	}
-	   	sessionStorage.setItem("files", JSON.stringify(fileList)); 
+	   	sessionStorage.setItem("files", JSON.stringify(fileList));
 
 	   	var files_array = JSON.parse(sessionStorage.getItem("files")).files;
 
@@ -119,7 +119,8 @@ function updatePrinterStatus()
 	var uri = 'https://printzz.herokuapp.com/printer_status';
 	$.get(uri, function(data, status){
 		//get status from data parameter
-		var p_status = true;
+		var p_status = data['status'];
+		console.log(data)
 		if(p_status)
 		{
 			$('.circle').css("background-color", "#006400");
