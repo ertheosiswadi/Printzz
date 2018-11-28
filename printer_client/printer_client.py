@@ -3,17 +3,28 @@ import requests
 import subprocess
 import time
 import urllib
+import signal
+import sys
 
 url = 'http://printzz.herokuapp.com/'
 refresh_time = 2
 print_time = 30
 
-def poll_server():    
+def signal_handler(sig, frame):
+        # When the User Exits the Program,
+        # Tell Server that the Printer is Off
+        params = {'printer_id': 'e19e5d74-6ed2-41b6-ad21-ed1c8e7be7e1',
+                  'status':False}
+        requests.post(url+'printer_status', params=params)
+
+        sys.exit(0)
+
+def poll_server():
 
     # Check if There is a File Ready to Print
     params = {'printer_id': 'e19e5d74-6ed2-41b6-ad21-ed1c8e7be7e1'}
     settings = (requests.get(url+'get_doc_settings', params=params)).json()
-    
+
     # Return to Loop if No File Exists
     if (settings['status'] == False):
         return
@@ -43,7 +54,7 @@ def poll_server():
         print_cmd += "-o sides=two-sided-short-edge "
     if (settings['data']['settings']['color'] == False):            # Color Printing
         print_cmd += "-oColorModel=KGray"
-    
+
     # Issue Print Command to the System
     subprocess.call(print_cmd, shell=True)
     print (print_cmd)
@@ -57,8 +68,16 @@ def poll_server():
         print ("ERROR: " + pop_res['error'])
         exit()
     return
-    
+
 def main():
+    # Enable Signal Handler
+    signal.signal(signal.SIGINT, signal_handler)
+
+    # Tell Server that the Printer is On
+    params = {'printer_id': 'e19e5d74-6ed2-41b6-ad21-ed1c8e7be7e1',
+              'status':True}
+    requests.post(url+'printer_status', params=params)
+
     # Delete Any Existing Print Files
     subprocess.call('rm -f print.*', shell=True)
 
