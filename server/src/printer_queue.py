@@ -72,7 +72,7 @@ class LoadingIndex(enum.Enum):
     DOC_NAME_INDEX = 3
     EXTENSION_INDEX = 4
 
-def validate_file(filename) -> Optional[Tuple[str, str]]:
+def validate_file(filename: str) -> Optional[Tuple[str, str]]:
     filename = secure_filename(filename)
     _, extension = os.path.splitext(filename)
     extension = extension[1:]
@@ -85,6 +85,11 @@ def get_con():
     database_path = os.path.join(DATABASES_PATH, QUEUE_FILE)
     db_con = sqlite3.connect(database_path)
     return (db_con, db_con.cursor(),)
+
+def remove_file(document: Document) -> bool:
+    filepath = os.path.join(FILES_PATH, document.get_saved_name())
+    os.remove(filepath)
+    return True
 
 def load_doc(user: User, doc_name: str) -> Optional[str]:
 
@@ -180,8 +185,6 @@ def tuple_to_doc(doc_tuple, settings_tuple) -> Document:
         settings, \
         progress)
 
-
-
 def get_queue(user: Optional[User] = None) -> List[Document]:
     db_con, cursor = get_con()
 
@@ -225,11 +228,11 @@ def top() -> Optional[Document]:
 
     return tuple_to_doc(doc_result, settings_result)
 
-
 def pop() -> None:
     queue_top = top()
     if not queue_top:
         return None
+    remove_file(queue_top)
 
     db_con, cursor = get_con()
 
@@ -269,6 +272,7 @@ def delete_doc(user: User, doc_id: str) -> bool:
     db_con, cursor = get_con()
 
     FIND_DOC = f"SELECT * FROM {QUEUE_TABLE} WHERE {DOC_ID_KEY} = ?"
+    GET_MATCHING_SETTINGS = f"SELECT * FROM {SETTINGS_TABLE} WHERE {DOC_ID_KEY}=?"
     DELETE_FROM_QUEUE = f"DELETE FROM {QUEUE_TABLE} WHERE {DOC_ID_KEY} = ?"
     DELETE_FROM_SETTINGS = f"DELETE FROM {SETTINGS_TABLE} WHERE {DOC_ID_KEY} = ?"
     ADJUST_POSITION = f"UPDATE {QUEUE_TABLE} SET {CURRENT_POSITION_KEY} = {CURRENT_POSITION_KEY} - 1 WHERE {CURRENT_POSITION_KEY} > ?"
@@ -278,6 +282,11 @@ def delete_doc(user: User, doc_id: str) -> bool:
 
     if doc_info is None or doc_info[DocumentIndex.USER_ID_INDEX.value] != user.user_id:
         return False
+
+    cursor.execute(GET_MATCHING_SETTINGS, (doc_info[DocumentIndex.DOC_ID_INDEX.value],))
+    settings_info = cursor.fetchone()
+
+    remove_file(tuple_to_doc(doc_info, settings_info))
 
     cursor.execute(DELETE_FROM_QUEUE, (doc_id,))
     cursor.execute(DELETE_FROM_SETTINGS, (doc_id,))
