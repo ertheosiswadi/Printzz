@@ -42,10 +42,16 @@ def create_return_json(status, data=None, error=None):
 
 @app.route('/', methods=['GET'])
 def login_page():
+    '''
+    Returns the html for the login page
+    '''
     return render_template('login.html')
 
 @app.route('/html/<page>', methods=['GET'])
 def page_selection(page):
+    '''
+    Handles HTML requests from front end server. Returns html documents based on page key passed in
+    '''
     template = ''
     if page == 'p_upload':
         template = 'print_upload.html'
@@ -66,44 +72,65 @@ def page_selection(page):
 
 @app.route('/add_doc_settings', methods=['POST'])
 def upload_settings():
+    '''
+    Uploads the settings for a user. Document must be uploaded first with upload_file before this can be used.
+        Parameters must include user_id
+        Must be met with a request with json of the document's settings
+    '''
     if request.json is None:
         return jsonify(create_return_json(False, error = 'Settings JSON was not given.'))
 
+    # Get user_id from url param
     user_id = request.args.get(USER_ID_KEY, type = str)
     user = user_auth.get_user(user_id)
     if not user:
         return jsonify(create_return_json(False, error = f'User with user_id: {user_id} does not exist.'))
 
+    # Convert the json into a settings object, if it is not valid, return an error
     settings = PrintSettings.from_dict(request.json)
     if not settings:
         return jsonify(create_return_json(False, error = 'Settings JSON was invalid.'))
 
+    # Unload document from the loading list for the user
     document = printer_queue.unload_doc(user, settings)
     if not document:
         return jsonify(create_return_json(False, error = f'No document previously loaded for user with user_id: {user_id}'))
 
+    # Add the document received from the unloading into the queue
     printer_queue.add_to_queue(document)
 
     return jsonify(create_return_json(True, document.to_dict()))
 
 @app.route('/add_doc_file', methods=['POST'])
 def upload_file():
+    '''
+    Uploads a file to be printed. This must be called before upload_settings is called
+        Param:
+            user_id - user's id
+        Multipart file:
+            file: file to print
+    '''
+    # If the input file is not in the request, return an error
     if INPUT_FILE_KEY not in request.files:
         return jsonify(create_return_json(False, error = 'No file provided.'))
 
+    # get the file and make sure the filename is not empty
     file = request.files[INPUT_FILE_KEY]
     if file.filename == '':
         return jsonify(create_return_json(False, 'Filename cannot be empty.'))
 
+    # Get the user ID and verify it is valid
     user_id = request.args.get(USER_ID_KEY, type = str)
     user = user_auth.get_user(user_id)
     if not user:
         return jsonify(create_return_json(False, error = f'User with user_id: {user_id} does not exist.'))
 
+    # Add the document for loading into the loading table
     doc_filename = printer_queue.load_doc(user, file.filename)
     if not doc_filename:
         return jsonify(create_return_json(False, error = f'Failed to load document.'))
 
+    # Get the new filepath
     filepath = os.path.join(FILES_PATH, doc_filename)
     file.save(filepath)
 
@@ -111,49 +138,78 @@ def upload_file():
 
 @app.route('/get_doc', methods=['GET'])
 def get_doc():
+    '''
+    Return the document at the top of the queue iff printer_id is correctly provided
+        Param:
+            printer_id - specified printer key
+    '''
+
+    # Get the printer id and make sure it matches the expected value
     printer_id = request.args.get(PRINTER_ID_KEY, type = str)
     if not printer_id or printer_id != PRINTER_ID:
         return jsonify(create_return_json(False, error = 'Invalid printer id!'))
 
+    # Return false if the queue is empty
     if printer_queue.get_len() is 0:
         return jsonify(create_return_json(False, error = 'Queue is empty.'))
 
+    # Otherwise, get the top of the queue
     document = printer_queue.top()
     filepath = os.path.join('../' + FILES_PATH, document.get_saved_name())
-    print(filepath)
+
+    # Return the document as an attachment
     return send_file(filepath, attachment_filename=document.get_saved_name())
 
 @app.route('/get_doc_settings', methods=['GET'])
 def get_settings():
+    '''
+    Returns the document info iff printer_id matches valid printer key
+        param:
+            printer_id - key for current printer
+    '''
+
+    # Get printer key and make sure it matches
     printer_id = request.args.get(PRINTER_ID_KEY, type = str)
     if not printer_id or printer_id != PRINTER_ID:
         return jsonify(create_return_json(False, error = 'Invalid printer id!'))
 
+    # Return false if the queue is empty
     if printer_queue.get_len() is 0:
         return jsonify(create_return_json(False, error = 'Queue is empty.'))
 
+    # Get the top document and return it's info
     document = printer_queue.top()
     return jsonify(create_return_json(True, document.to_dict()))
 
 @app.route('/pop_doc', methods=['GET'])
 def pop_doc():
+    '''
+    Pop off the top doc iff the printer_id provided is correct
+        param:
+            printer_id - key for current printer
+    '''
+
+    # Get printer_id and make sure it matches
     printer_id = request.args.get(PRINTER_ID_KEY, type = str)
     if not printer_id or printer_id != PRINTER_ID:
         return jsonify(create_return_json(False, error = 'Invalid printer id!'))
 
+    # Make sure queue is not empty
     if printer_queue.get_len() is 0:
         return jsonify(create_return_json(False, error = 'Queue is empty.'))
 
-    document = printer_queue.top()
-    filepath = os.path.join(FILES_PATH, document.get_saved_name())
-    os.remove(filepath)
-
+    # Pop the document off
     printer_queue.pop()
-
     return jsonify(create_return_json(True))
 
 @app.route('/delete_doc', methods=['GET'])
 def delete_doc():
+    '''
+    Remove a document with passed in doc_id if the user_id passed in matches the document
+        params:
+            doc_id - document id of document to delete
+        user_id - user id of current user which has to match the document id passed in.
+    '''
     user_id = request.args.get(USER_ID_KEY, type = str)
     doc_id = request.args.get(DOC_ID_KEY, type = str)
 
