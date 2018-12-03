@@ -65,12 +65,17 @@ $(document).ready(() =>{
 
 function getFileMarkup(filename, percentage, index)
 {
+	let progress_bar_value = percentage;
+	if(percentage <= 10)
+	{
+		progress_bar_value = 10;
+	}
 	return '<tr>'
 	        +'<td style="text-align: center;vertical-align: middle;">'+ filename +'</td>'
 	        +'<td>'
 	              +'<div class="col-md-9 col-sm-9 col-lg-9">'
 	                +'<div class="progress" style="vertical-align: middle;margin-bottom: 0px;margin-top: 5px;">'
-	                  +'<div class="progress-bar progress-bar-success progress-bar-striped active" style="width:'+ percentage +'%;vertical-align: middle">'+ percentage +'%</div>'
+	                  +'<div class="progress-bar progress-bar-success progress-bar-striped active" style="width:'+ progress_bar_value +'%;vertical-align: middle">'+ percentage +'%</div>'
 	                +'</div>'
 	              +'</div>'
 	              +'<div class="col-md-2 col-sm-2 col-lg-2" style="align-self:right;vertical-align: middle">'
