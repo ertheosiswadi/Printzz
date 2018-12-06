@@ -16,6 +16,9 @@ def get_doc_name(doc_id: str, ext: str) -> str:
 
 @dataclass
 class Document:
+    '''
+    Class to represent a valid document
+    '''
     username: str
     user_id: str
     name: str

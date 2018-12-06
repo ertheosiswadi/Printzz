@@ -17,6 +17,7 @@ PROGRESS_KEY = 'progress'
 SETTINGS_KEY = 'settings'
 PRINTER_STATUS_KEY = 'status'
 
+# Shh its a secret
 PRINTER_ID = 'e19e5d74-6ed2-41b6-ad21-ed1c8e7be7e1'
 PRINTER_ID_KEY = 'printer_id'
 

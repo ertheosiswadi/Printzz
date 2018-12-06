@@ -4,6 +4,9 @@ from dataclasses import dataclass
 
 @dataclass
 class User:
+    '''
+    Class which contains the username and user_id for a valid user
+    '''
     username: str
     user_id: str
 

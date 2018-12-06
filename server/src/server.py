@@ -143,7 +143,6 @@ def get_doc():
         Param:
             printer_id - specified printer key
     '''
-
     # Get the printer id and make sure it matches the expected value
     printer_id = request.args.get(PRINTER_ID_KEY, type = str)
     if not printer_id or printer_id != PRINTER_ID:
@@ -167,7 +166,6 @@ def get_settings():
         param:
             printer_id - key for current printer
     '''
-
     # Get printer key and make sure it matches
     printer_id = request.args.get(PRINTER_ID_KEY, type = str)
     if not printer_id or printer_id != PRINTER_ID:
@@ -188,7 +186,6 @@ def pop_doc():
         param:
             printer_id - key for current printer
     '''
-
     # Get printer_id and make sure it matches
     printer_id = request.args.get(PRINTER_ID_KEY, type = str)
     if not printer_id or printer_id != PRINTER_ID:
@@ -230,6 +227,9 @@ def delete_doc():
 
 @app.route('/get_queue', methods=['GET'])
 def get_queue():
+    '''
+    Returns the queue for the user with user_id passed in within the args
+    '''
     user_id = request.args.get(USER_ID_KEY, type = str)
     if user_id:
         user = user_auth.get_user(user_id)
@@ -248,6 +248,9 @@ def get_queue():
 
 @app.route('/register', methods=['POST'])
 def register():
+    '''
+    Registers a user within our SQL database
+    '''
     if not request.json:
         return jsonify(create_return_json(False))
 
@@ -269,6 +272,9 @@ def register():
 
 @app.route('/login', methods=['POST'])
 def authenticate():
+    '''
+    Logins in a user into the server, returns the user_id to pass back to server with every request
+    '''
     if not request.json:
         return jsonify(create_return_json(False, error = 'No JSON data provided.'))
 
@@ -289,6 +295,9 @@ def authenticate():
 
 @app.route('/printer_status', methods=['POST'])
 def update_printer_status():
+    '''
+    Updates printer status to arg value as long as the printer_id provided is valid
+    '''
     printer_id = request.args.get(PRINTER_ID_KEY, type = str)
     printer_status = request.args.get(PRINTER_STATUS_KEY, type = inputs.boolean)
 
@@ -304,4 +313,7 @@ def update_printer_status():
 
 @app.route('/printer_status', methods=['GET'])
 def get_printer_status():
+    '''
+    Returns the current printer status
+    '''
     return jsonify(create_return_json(printer_queue.get_status()))
