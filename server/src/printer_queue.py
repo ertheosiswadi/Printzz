@@ -73,6 +73,9 @@ class LoadingIndex(enum.Enum):
     EXTENSION_INDEX = 4
 
 def validate_file(filename: str) -> Optional[Tuple[str, str]]:
+    '''
+    Validates that a file is of a valid extension and returns a tuple of the filename and the extension
+    '''
     filename = secure_filename(filename)
     _, extension = os.path.splitext(filename)
     extension = extension[1:]
@@ -82,38 +85,51 @@ def validate_file(filename: str) -> Optional[Tuple[str, str]]:
     return (filename, extension,)
 
 def get_con():
+    '''
+    Returns a connection tot he printer_queue database
+    '''
     database_path = os.path.join(DATABASES_PATH, QUEUE_FILE)
     db_con = sqlite3.connect(database_path)
     return (db_con, db_con.cursor(),)
 
 def remove_file(document: Document) -> bool:
+    '''
+    Removes a file that is specified by the Document object passed in
+    '''
     filepath = os.path.join(FILES_PATH, document.get_saved_name())
     os.remove(filepath)
     return True
 
 def load_doc(user: User, doc_name: str) -> Optional[str]:
-
+    '''
+    Puts a document in the loading table, will delete a document if the user passed in already has a document loaded
+    '''
     FETCH_DOC = f"SELECT * FROM {DOCUMENT_LOADING_TABLE} WHERE {USER_ID_KEY} = ?"
     LOAD_DOC = f"INSERT INTO {DOCUMENT_LOADING_TABLE} ({USER_ID_KEY}, {USERNAME_KEY}, {DOC_ID_KEY}, {DOC_NAME_KEY}, {EXTENSION_KEY}) VALUES (?, ?, ?, ?, ?)"
     UPDATE_DOC = f"UPDATE {DOCUMENT_LOADING_TABLE} SET ({DOC_ID_KEY}, {DOC_NAME_KEY}, {EXTENSION_KEY}) = (?, ?, ?) WHERE {USER_ID_KEY} = (?)"
 
+    # Validate the file name
     file_tuple = validate_file(doc_name)
-
     if not file_tuple:
         return None
 
     db_con, cursor = get_con()
 
+    # Get the filename and extension of the file
     filename, extension = file_tuple
 
+    # Check if the user has a document loaded already
     cursor.execute(FETCH_DOC, (user.user_id,))
     loaded_doc = cursor.fetchone()
 
     doc_id = str(uuid.uuid4())
 
+    # If they dont, just load the new document
     if not loaded_doc:
         cursor.execute(LOAD_DOC, (user.user_id, user.username, doc_id, filename, extension,))
     else:
+    # Otherwise, delete the old doc and update the entry to the new document
+
         delete_extension = loaded_doc[LoadingIndex.EXTENSION_INDEX.value]
         delete_doc_id = loaded_doc[LoadingIndex.DOC_ID_INDEX.value]
         delete_filename = get_doc_name(delete_doc_id, delete_extension)
@@ -128,6 +144,9 @@ def load_doc(user: User, doc_name: str) -> Optional[str]:
     return get_doc_name(doc_id, extension)
 
 def unload_doc(user: User, settings: PrintSettings) -> Optional[Document]:
+    '''
+    Sees if a user has a document in the loading table and adds that document with the settings passed in into the printer_queue
+    '''
     db_con, cursor = get_con()
 
     FETCH_DOC = f"SELECT * FROM {DOCUMENT_LOADING_TABLE} WHERE {USER_ID_KEY} = ?"
@@ -154,6 +173,9 @@ def unload_doc(user: User, settings: PrintSettings) -> Optional[Document]:
 
 
 def get_len() -> int:
+    '''
+    Get the current length of the queue
+    '''
     db_con, cursor = get_con()
 
     GET_DOC_IDS = f"SELECT {DOC_ID_KEY} FROM {QUEUE_TABLE}"
@@ -166,6 +188,9 @@ def get_len() -> int:
     return len(response)
 
 def tuple_to_doc(doc_tuple, settings_tuple) -> Document:
+    '''
+    Converts doc_tuples and settings_tuples into a Document object
+    '''
     settings = PrintSettings( \
         int(settings_tuple[SettingsIndex.DOUBLE_SIDED_INDEX.value]), \
         settings_tuple[SettingsIndex.COPIES_INDEX.value], \
@@ -174,6 +199,7 @@ def tuple_to_doc(doc_tuple, settings_tuple) -> Document:
     cur_pos = doc_tuple[DocumentIndex.CURRENT_POSITION_INDEX.value] + 1
     start_pos = doc_tuple[DocumentIndex.START_POSITION_INDEX.value] + 1
 
+    # Progress is the change in the queue divided by the initial position
     progress = ((start_pos - cur_pos) / start_pos) * 100
 
     return Document( \
@@ -186,6 +212,9 @@ def tuple_to_doc(doc_tuple, settings_tuple) -> Document:
         progress)
 
 def get_queue(user: Optional[User] = None) -> List[Document]:
+    '''
+    Returns the entire queue if no user is passed in, returns only the user's queue if user is passed in
+    '''
     db_con, cursor = get_con()
 
     GET_DOC_QUEUE = f"SELECT * FROM {QUEUE_TABLE}"
@@ -210,6 +239,9 @@ def get_queue(user: Optional[User] = None) -> List[Document]:
         return [doc for doc in doc_list if doc.user_id == user.user_id]
 
 def top() -> Optional[Document]:
+    '''
+    Returns the top of the queue if the queue is not empty
+    '''
     if get_len() <= 0:
         return None
 
@@ -229,6 +261,9 @@ def top() -> Optional[Document]:
     return tuple_to_doc(doc_result, settings_result)
 
 def pop() -> None:
+    '''
+    Pops the document at current_position 0 and decreases all current_positions by 1. Deletes the file from the file system
+    '''
     queue_top = top()
     if not queue_top:
         return None
@@ -248,6 +283,9 @@ def pop() -> None:
     db_con.close()
 
 def add_to_queue(document: Document) -> None:
+    '''
+    Adds a document to the queue, is called by add_doc_settings server endpoint
+    '''
     db_con, cursor = get_con()
 
     QUEUE_INSERT = f'''INSERT INTO {QUEUE_TABLE} (
@@ -269,6 +307,9 @@ def add_to_queue(document: Document) -> None:
     db_con.close()
 
 def delete_doc(user: User, doc_id: str) -> bool:
+    '''
+    Deletes a document if the user matches the doc_id provided
+    '''
     db_con, cursor = get_con()
 
     FIND_DOC = f"SELECT * FROM {QUEUE_TABLE} WHERE {DOC_ID_KEY} = ?"
@@ -298,6 +339,9 @@ def delete_doc(user: User, doc_id: str) -> bool:
     return True
 
 def update_status(status: bool) -> None:
+    '''
+    Updates the printer status
+    '''
     db_con, cursor = get_con()
 
     UPDATE_STATUS = f"UPDATE {PRINTER_STATUS_TABLE} SET {PRINTER_STATUS_KEY} = ?"
@@ -308,6 +352,9 @@ def update_status(status: bool) -> None:
     db_con.close()
 
 def get_status() -> bool:
+    '''
+    Returns the printer status
+    '''
     db_con, cursor = get_con()
 
     GET_STATUS = f"SELECT {PRINTER_STATUS_KEY} FROM {PRINTER_STATUS_TABLE}"
@@ -320,6 +367,9 @@ def get_status() -> bool:
     return bool(status[0])
 
 def initialize() -> None:
+    '''
+    Initializes the printer_queue module
+    '''
     try:
         os.mkdir(DATABASES_PATH)
     except:

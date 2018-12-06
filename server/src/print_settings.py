@@ -5,6 +5,9 @@ from typing import Optional
 
 @dataclass
 class PrintSettings:
+    '''
+    Class to represent PrintSettings
+    '''
     double_sided: int = 0
     copies: int = 1
     color: bool = False
