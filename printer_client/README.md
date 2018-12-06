@@ -6,6 +6,6 @@ This is the code that will run on the Raspberry Pi to retrieve documents from th
 ##  Supported Features
 | Feature | Support |
 | ---|---|
-|File Types|DOCX, PDF, TXT|
+|File Types|DOC, DOCX, PDF|
 |Printer Options| # of Copies, Double-Sided, Color|
 *<i>Table indicates current support. Additional features can be added.
